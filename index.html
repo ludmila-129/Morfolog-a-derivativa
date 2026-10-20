@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -250,6 +249,69 @@
             transform: scale(0.96);
         }
 
+        /* ----- Selección de nivel ----- */
+        .level-screen {
+            background: #262b34;
+            border-radius: 28px;
+            padding: 32px 24px 34px;
+            border: 1px solid #333a46;
+            text-align: center;
+        }
+        .level-title {
+            font-size: 20px;
+            color: #eee9df;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .level-options {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .level-btn {
+            flex: 1 1 240px;
+            max-width: 330px;
+            padding: 26px 20px;
+            border-radius: 24px;
+            border: 2px solid #3c4250;
+            background: #2c313b;
+            color: #eee9df;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .level-btn:hover {
+            border-color: #b99a68;
+            background: #333a46;
+            transform: translateY(-2px);
+        }
+        .level-name {
+            font-size: 30px;
+            font-weight: 700;
+            color: #d9bf8c;
+        }
+        .level-desc {
+            font-size: 15px;
+            color: #c3bfb6;
+        }
+        .change-level-btn {
+            background: transparent;
+            border: 1.5px solid #3c4250;
+            color: #c3bfb6;
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 18px;
+        }
+        .change-level-btn:hover {
+            border-color: #b99a68;
+            color: #eee9df;
+        }
+
         /* ----- Modal personalizado ----- */
         .modal-overlay {
             display: none;
@@ -349,12 +411,28 @@
 <body>
 
     <div class="app">
-        <h1>🧩 Derivación <small>DELE C1 · C2</small></h1>
+        <h1>🧩 Derivación <small id="levelTag">DELE B2 · C1 · C2</small></h1>
         <div class="subhead">
             Instrucciones: escribe todas las palabras derivadas de la raíz que se muestra. Pueden aparecer infinitivos, participios, sustantivos, adjetivos y adverbios.
         </div>
 
-        <div class="game-panel">
+        <!-- Pantalla de selección de nivel -->
+        <div class="level-screen" id="levelScreen">
+            <p class="level-title">Elige tu nivel</p>
+            <div class="level-options">
+                <button class="level-btn" id="levelB2">
+                    <span class="level-name">B2</span>
+                    <span class="level-desc">Familias léxicas de uso frecuente</span>
+                </button>
+                <button class="level-btn" id="levelC1C2">
+                    <span class="level-name">C1 · C2</span>
+                    <span class="level-desc">Derivación avanzada y léxico culto</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="game-panel" id="gamePanel" style="display:none;">
+            <button class="change-level-btn" id="changeLevelBtn">← Cambiar nivel</button>
             <div class="prompt-area">
                 <div class="prompt-label">Raíz</div>
                 <div class="prompt-word" id="promptWord">justo</div>
@@ -395,85 +473,84 @@
         // --------------------------------------------------------------
         //  BASE DE DATOS DE FAMILIAS LÉXICAS (ampliada)
         // --------------------------------------------------------------
-        const WORD_FAMILIES = [
-            { root: 'justo', derivatives: ['justo', 'justicia', 'justificar', 'justificación', 'injusto', 'injusticia', 'justísimo'] },
+        const WORD_FAMILIES_C1 = [
+            { root: 'justo', derivatives: ['justicia', 'justificar', 'justificación', 'injusto', 'injusticia', 'justísimo'] },
             { root: 'mercado', derivatives: ['mercantil', 'mercantilizar', 'mercantilización', 'mercante', 'mercader', 'mercadear', 'mercadero'] },
             { root: 'individuo', derivatives: ['individual', 'individualizar', 'individualización', 'individualismo', 'individualista', 'individualmente'] },
             { root: 'vía', derivatives: ['viable', 'inviable', 'viabilidad', 'inviabilidad', 'viabilizar'] },
             { root: 'figura', derivatives: ['figurar', 'desfigurar', 'figurativo', 'configuración', 'reconfigurar', 'reconfiguración', 'configurado', 'configurable'] },
             { root: 'instrumento', derivatives: ['instrumental', 'instrumentalizar', 'instrumentalización', 'instrumentista'] },
             { root: 'institución', derivatives: ['institucional', 'institucionalizar', 'institucionalización', 'desinstitucionalizar', 'desinstitucionalización'] },
-            { root: 'concepto', derivatives: ['concepto', 'conceptual', 'conceptualizar', 'conceptualización', 'reconceptualizar', 'reconceptualización'] },
+            { root: 'concepto', derivatives: ['conceptual', 'conceptualizar', 'conceptualización', 'reconceptualizar', 'reconceptualización'] },
             { root: 'homogéneo', derivatives: ['homogeneidad', 'homogeneizar', 'homogeneización', 'homogéneamente'] },
             { root: 'representar', derivatives: ['irrepresentatividad', 'representación', 'representante', 'representativo', 'representatividad', 'irrepresentable'] },
             { root: 'decidir', derivatives: ['decisión', 'decisivo', 'indecisión', 'indeciso', 'indecisivo', 'decidido', 'decididamente', 'decisivamente'] },
             { root: 'producir', derivatives: ['producción', 'producto', 'productivo', 'productor', 'reproducir', 'reproducción', 'productividad', 'improductivo'] },
             { root: 'poner', derivatives: ['contraponer', 'posición', 'posicionar', 'posicionamiento', 'componer', 'composición', 'exponer', 'exposición', 'disponer', 'disposición'] },
-            { root: 'claro', derivatives: ['claro', 'claridad', 'aclarar', 'aclaración', 'clarificar', 'clarificación', 'clarísimo'] },
-            { root: 'digno', derivatives: ['digno', 'dignidad', 'dignificar', 'dignificación', 'indigno', 'indignidad', 'dignísimo'] },
-            { root: 'público', derivatives: ['público', 'publicar', 'publicación', 'publicidad', 'publicitario', 'republicar'] },
-            { root: 'razón', derivatives: ['razón', 'razonar', 'razonamiento', 'razonable', 'irrazonable', 'razonado'] },
-            { root: 'poder', derivatives: ['poder', 'poderío', 'poderoso', 'potente', 'potencia', 'potencial', 'potencialidad'] },
-            { root: 'ciencia', derivatives: ['ciencia', 'conciencia', 'consciente', 'inconsciente', 'inconsciencia', 'consciencia'] },
-            { root: 'fácil', derivatives: ['fácil', 'facilidad', 'facilitar', 'facilitación','facilísimo'] },
-            { root: 'fuerte', derivatives: ['fuerte', 'fortaleza', 'fortalecer', 'fortalecimiento', 'forzar', 'esforzar', 'fortísimo'] },
+            { root: 'claro', derivatives: ['claridad', 'aclarar', 'aclaración', 'clarificar', 'clarificación', 'clarísimo'] },
+            { root: 'digno', derivatives: ['dignidad', 'dignificar', 'dignificación', 'indigno', 'indignidad', 'dignísimo'] },
+            { root: 'público', derivatives: ['publicar', 'publicación', 'publicidad', 'publicitario', 'republicar'] },
+            { root: 'razón', derivatives: ['razonar', 'razonamiento', 'razonable', 'irrazonable', 'razonado'] },
+            { root: 'poder', derivatives: ['poderío', 'poderoso', 'potente', 'potencia', 'potencial', 'potencialidad'] },
+            { root: 'ciencia', derivatives: ['conciencia', 'consciente', 'inconsciente', 'inconsciencia', 'consciencia'] },
+            { root: 'fácil', derivatives: ['facilidad', 'facilitar', 'facilitación', 'facilísimo'] },
+            { root: 'fuerte', derivatives: ['fortaleza', 'fortalecer', 'fortalecimiento', 'forzar', 'esforzar', 'fortísimo'] },
             { root: 'nuevo', derivatives: ['novedoso', 'novedad', 'innovar', 'innovación', 'innovador', 'renovar', 'renovación'] },
             { root: 'desarrollo', derivatives: ['desarrollar', 'desarrollista', 'subdesarrollo', 'subdesarrollado'] },
-            { root: 'competir', derivatives: ['competir', 'competencia', 'competente', 'competitividad', 'competitivo', 'incompetente', 'incompetencia'] },
+            { root: 'competir', derivatives: ['competencia', 'competente', 'competitividad', 'competitivo', 'incompetente', 'incompetencia'] },
             { root: 'posible', derivatives: ['posibilitar', 'imposibilitar', 'imposible', 'posibilidad', 'imposibilidad', 'posiblemente'] },
-            { root: 'responsable', derivatives: ['responsable', 'irresponsable', 'responsabilidad', 'irresponsabilidad'] },
-            { root: 'ley', derivatives: ['legal', 'ilegal', 'legalidad', 'ilegalidad', 'legalizar', 'legalización', 'legítimo', 'legitimidad', 'legitimar', 'legitimación', 'deslegitimar', 'deslegitimación', 'ilegítimo'] },
-            { root: 'normal', derivatives: ['normal', 'anormal', 'normalidad', 'normalizar', 'normalización'] },
+            { root: 'responsable', derivatives: ['irresponsable', 'responsabilidad', 'irresponsabilidad'] },
+            { root: 'ley', derivatives: ['legal', 'ilegal', 'legalidad', 'ilegalidad', 'legalizar', 'legalización', 'legítimo', 'legitimidad', 'legitimar', 'legitimación', 'deslegitimar', 'deslegitimación', 'ilegítimo', 'legislar', 'legislación', 'legislador'] },
+            { root: 'normal', derivatives: ['anormal', 'normalidad', 'normalizar', 'normalización'] },
             { root: 'social', derivatives: ['asocial', 'antisocial', 'socialismo', 'socialista', 'socializar', 'socialización'] },
             { root: 'ataque', derivatives: ['atacar', 'contraataque', 'contraatacar'] },
             { root: 'decir', derivatives: ['dicho', 'dicción', 'diccionario', 'contradecir', 'contradicción', 'predecir', 'predicción'] },
             { root: 'ver', derivatives: ['visto', 'previsto', 'visión', 'visible', 'invisible', 'visibilidad', 'prever', 'previsión', 'revisar', 'revisión'] },
             { root: 'recibir', derivatives: ['recibo', 'recepción', 'receptor', 'receptivo'] },
-            { root: 'percibir', derivatives: ['percibir', 'percepción', 'perceptivo', 'perceptible'] },
-            { root: 'conducir', derivatives: ['conducir', 'conducción', 'conductor', 'conducta', 'reconducir'] },
-            { root: 'traducir', derivatives: ['traducir', 'traducción', 'traductor', 'intraducible'] },
-            { root: 'elegir', derivatives: ['elegir', 'elección', 'elector', 'electoral', 'selecto', 'selección'] },
-            { root: 'dirigir', derivatives: ['dirigir', 'dirección', 'director', 'directivo', 'directriz'] },
-            { root: 'informar', derivatives: ['informar', 'información', 'informativo', 'informador', 'desinformar', 'desinformación'] },
-            { root: 'aplicar', derivatives: ['aplicar', 'aplicación', 'aplicable', 'aplicabilidad', 'inaplicable'] },
-            { root: 'explicar', derivatives: ['explicar', 'explicación', 'explicativo', 'inexplicable'] },
-            { root: 'comerciar', derivatives: ['comerciar', 'comercio', 'comercial', 'comercializar', 'comercialización', 'comerciante'] },
-            { root: 'juzgar', derivatives: ['juzgar', 'juicio', 'juez', 'prejuzgar', 'prejuicio'] },
-            { root: 'mover', derivatives: ['mover', 'movimiento', 'móvil', 'movilidad', 'inmóvil', 'inmovilidad', 'automóvil'] },
-            { root: 'venir', derivatives: ['venir', 'venida', 'bienvenida', 'bienvenido', 'porvenir', 'provenir', 'proveniente', 'convenir', 'conveniente', 'inconveniente'] },
-            { root: 'abrir', derivatives: ['abrir', 'abierto', 'apertura', 'abertura', 'reabrir'] },
-            { root: 'resolver', derivatives: ['resolver', 'resolución', 'resolutivo', 'irresoluble'] },
-            { root: 'ley', derivatives: ['ley', 'legal', 'ilegal', 'legalidad', 'legislar', 'legislación', 'legislador'] },
-            { root: 'nación', derivatives: ['nación', 'nacional', 'nacionalidad', 'nacionalizar', 'nacionalización', 'internacional'] },
-            { root: 'ojo', derivatives: ['ojo', 'ocular', 'ojera', 'desojado'] },
-            { root: 'corazón', derivatives: ['corazón', 'cardíaco', 'cardiólogo', 'cordial'] },
-            { root: 'agua', derivatives: ['agua', 'acuático', 'acuoso', 'aguar', 'paraguas'] },
-            { root: 'industria', derivatives: ['industria', 'industrial', 'industrializar', 'industrialización', 'industrialista'] },
-            { root: 'estadística', derivatives: ['estadística', 'estadístico', 'estadísticamente'] },
-            { root: 'característica', derivatives: ['característica', 'característico', 'caracterizar', 'caracterización'] },
-            { root: 'economía', derivatives: ['economía', 'económico', 'economista', 'economizar'] },
-            { root: 'político', derivatives: ['político', 'política', 'politizar', 'politización', 'apolítico'] },
-            { root: 'democracia', derivatives: ['democracia', 'democrático', 'democratizar', 'democratización', 'antidemocrático'] },
-            { root: 'burocracia', derivatives: ['burocracia', 'burócrata', 'burocrático', 'burocratizar'] },
-            { root: 'transformar', derivatives: ['transformar', 'transformación', 'transformador', 'transformista'] },
-            { root: 'conectar', derivatives: ['conectar', 'conexión', 'conector', 'desconectar'] },
-            { root: 'conocer', derivatives: ['conocer', 'conocimiento', 'conocido', 'reconocer', 'reconocimiento'] },
+            { root: 'percibir', derivatives: ['percepción', 'perceptivo', 'perceptible'] },
+            { root: 'conducir', derivatives: ['conducción', 'conductor', 'conducta', 'reconducir'] },
+            { root: 'traducir', derivatives: ['traducción', 'traductor', 'intraducible'] },
+            { root: 'elegir', derivatives: ['elección', 'elector', 'electoral', 'selecto', 'selección'] },
+            { root: 'dirigir', derivatives: ['dirección', 'director', 'directivo', 'directriz'] },
+            { root: 'informar', derivatives: ['información', 'informativo', 'informador', 'desinformar', 'desinformación'] },
+            { root: 'aplicar', derivatives: ['aplicación', 'aplicable', 'aplicabilidad', 'inaplicable'] },
+            { root: 'explicar', derivatives: ['explicación', 'explicativo', 'inexplicable'] },
+            { root: 'comerciar', derivatives: ['comercio', 'comercial', 'comercializar', 'comercialización', 'comerciante'] },
+            { root: 'juzgar', derivatives: ['juicio', 'juez', 'prejuzgar', 'prejuicio'] },
+            { root: 'mover', derivatives: ['movimiento', 'móvil', 'movilidad', 'inmóvil', 'inmovilidad', 'automóvil'] },
+            { root: 'venir', derivatives: ['venida', 'bienvenida', 'bienvenido', 'porvenir', 'provenir', 'proveniente', 'convenir', 'conveniente', 'inconveniente'] },
+            { root: 'abrir', derivatives: ['abierto', 'apertura', 'abertura', 'reabrir'] },
+            { root: 'resolver', derivatives: ['resolución', 'resolutivo', 'irresoluble'] },
+            { root: 'nación', derivatives: ['nacional', 'nacionalidad', 'nacionalizar', 'nacionalización', 'internacional'] },
+            { root: 'ojo', derivatives: ['ocular', 'ojera', 'desojado'] },
+            { root: 'corazón', derivatives: ['cardíaco', 'cardiólogo', 'cordial'] },
+            { root: 'agua', derivatives: ['acuático', 'acuoso', 'aguar', 'paraguas'] },
+            { root: 'industria', derivatives: ['industrial', 'industrializar', 'industrialización', 'industrialista'] },
+            { root: 'estadística', derivatives: ['estadístico', 'estadísticamente'] },
+            { root: 'característica', derivatives: ['característico', 'caracterizar', 'caracterización'] },
+            { root: 'economía', derivatives: ['económico', 'economista', 'economizar'] },
+            { root: 'político', derivatives: ['política', 'politizar', 'politización', 'apolítico'] },
+            { root: 'democracia', derivatives: ['democrático', 'democratizar', 'democratización', 'antidemocrático'] },
+            { root: 'burocracia', derivatives: ['burócrata', 'burocrático', 'burocratizar'] },
+            { root: 'transformar', derivatives: ['transformación', 'transformador', 'transformista'] },
+            { root: 'conectar', derivatives: ['conexión', 'conector', 'desconectar'] },
+            { root: 'conocer', derivatives: ['conocimiento', 'conocido', 'reconocer', 'reconocimiento'] },
             { root: 'ciclo', derivatives: ['ciclón', 'reciclar', 'reciclaje', 'reciclable'] },
-            { root: 'analizar', derivatives: ['analizar', 'análisis', 'analista', 'analítico'] },
-            { root: 'admitir', derivatives: ['admitir', 'admisión', 'admisible', 'inadmisible'] },
-            { root: 'leer', derivatives: ['leer', 'lectura', 'lector', 'lectivo'] },
+            { root: 'analizar', derivatives: ['análisis', 'analista', 'analítico'] },
+            { root: 'admitir', derivatives: ['admisión', 'admisible', 'inadmisible'] },
+            { root: 'leer', derivatives: ['lectura', 'lector', 'lectivo'] },
             { root: 'pan', derivatives: ['empanar', 'panadero', 'panadería', 'panificación'] },
             { root: 'fama', derivatives: ['famosísimo', 'famoso', 'famosamente', 'infame', 'infamia'] },
-            { root: 'cultura', derivatives: ['cultura', 'cultural', 'culto', 'inculto'] },
+            { root: 'cultura', derivatives: ['cultural', 'culto', 'inculto'] },
             { root: 'urbe', derivatives: ['urbanización', 'urbano', 'urbanidad', 'urbanizar', 'desurbanización'] },
             { root: 'alimento', derivatives: ['alimenticio', 'alimentario', 'alimentar'] },
-            { root: 'banco', derivatives: ['banco', 'bancario', 'bancarrota'] },
+            { root: 'banco', derivatives: ['bancario', 'bancarrota'] },
             { root: 'problema', derivatives: ['problemático', 'problematizar'] },
             { root: 'sistema', derivatives: ['asistemático', 'sistematización', 'sistemáticamente', 'sistémico', 'sistemático', 'sistematizar'] },
             { root: 'real', derivatives: ['surreal', 'realista', 'realeza', 'realengo', 'realizar', 'realización', 'realmente', 'surrealista', 'realismo', 'surrealismo'] },
             { root: 'idea', derivatives: ['ideal', 'idear', 'ideación', 'idealización', 'ideario', 'idealista', 'idealismo', 'idealizar'] },
             { root: 'casa', derivatives: ['casona', 'casero', 'casita', 'casería', 'casón'] },
-            { root: 'rojo', derivatives: ['rojizo', 'pelirrojo', 'enrojecimiento', 'enrojecido', 'infrarojo', 'sonrojarse','sonrojar', 'enrojecer'] },
+            { root: 'rojo', derivatives: ['rojizo', 'pelirrojo', 'enrojecimiento', 'enrojecido', 'infrarojo', 'sonrojarse', 'sonrojar', 'enrojecer'] },
             { root: 'enfermo', derivatives: ['enfermizo', 'enfermedad'] },
             { root: 'golpe', derivatives: ['golpiza', 'golpear', 'golpazo'] },
             { root: 'voz', derivatives: ['vocear', 'vocero', 'vocal', 'altavoz'] },
@@ -491,9 +568,69 @@
             { root: 'botella', derivatives: ['embotellar', 'embotellamiento'] },
             { root: 'grupo', derivatives: ['agrupar', 'reagrupar', 'agrupación'] },
             { root: 'heredar', derivatives: ['heredero', 'desheredar', 'herencia'] },
-            { root: 'bello', derivatives: ['bello', 'belleza', 'embellecer', 'embellecimiento'] },
+            { root: 'bello', derivatives: ['belleza', 'embellecer', 'embellecimiento'] },
             { root: 'cortar', derivatives: ['recortar', 'corte', 'corto', 'cortante', 'recorte', 'acortar'] },
         ];
+
+        const WORD_FAMILIES_B2 = [
+            { root: 'acuerdo', derivatives: ['acordar', 'acordado', 'desacuerdo'] },
+            { root: 'adaptar', derivatives: ['adaptación', 'adaptable', 'adaptado', 'readaptar', 'readaptación'] },
+            { root: 'advertir', derivatives: ['advertencia', 'advertido'] },
+            { root: 'afectar', derivatives: ['afectación', 'afectado', 'afectivo', 'afectividad'] },
+            { root: 'ahorrar', derivatives: ['ahorro', 'ahorrador', 'ahorrativo'] },
+            { root: 'apoyar', derivatives: ['apoyo', 'respaldar', 'respaldo'] },
+            { root: 'aprovechar', derivatives: ['aprovechamiento', 'aprovechable', 'desaprovechar'] },
+            { root: 'asumir', derivatives: ['asunción', 'asumible'] },
+            { root: 'beneficio', derivatives: ['beneficiar', 'beneficioso', 'beneficiario', 'beneficencia'] },
+            { root: 'capaz', derivatives: ['capacidad', 'capacitar', 'capacitación', 'incapaz', 'incapacidad'] },
+            { root: 'comprometer', derivatives: ['compromiso', 'comprometido', 'descomprometer'] },
+            { root: 'consecuencia', derivatives: ['consecuente', 'consecuentemente', 'inconsecuente', 'inconsecuencia'] },
+            { root: 'considerar', derivatives: ['consideración', 'considerable', 'considerado', 'desconsiderado'] },
+            { root: 'contribuir', derivatives: ['contribución', 'contribuyente', 'contributivo'] },
+            { root: 'convencer', derivatives: ['convencimiento', 'convincente', 'convencido'] },
+            { root: 'cooperar', derivatives: ['cooperación', 'cooperativo', 'cooperante', 'cooperativa'] },
+            { root: 'crecer', derivatives: ['crecimiento', 'creciente'] },
+            { root: 'cumplir', derivatives: ['cumplimiento', 'cumplidor', 'incumplir', 'incumplimiento'] },
+            { root: 'depender', derivatives: ['dependencia', 'dependiente', 'independiente', 'independencia'] },
+            { root: 'desempeñar', derivatives: ['desempeño', 'desempeñarse'] },
+            { root: 'disponer', derivatives: ['disposición', 'disponible', 'disponibilidad', 'indisponible'] },
+            { root: 'eficaz', derivatives: ['eficacia', 'eficazmente', 'ineficaz', 'ineficacia'] },
+            { root: 'emplear', derivatives: ['empleo', 'empleado', 'empleador', 'empleabilidad', 'desempleo'] },
+            { root: 'establecer', derivatives: ['establecimiento', 'establecido', 'estable', 'estabilidad', 'inestable', 'inestabilidad'] },
+            { root: 'evaluar', derivatives: ['evaluación', 'evaluador', 'evaluativo', 'reevaluar', 'reevaluación'] },
+            { root: 'exigir', derivatives: ['exigencia', 'exigente', 'exigible'] },
+            { root: 'experiencia', derivatives: ['experimentar', 'experimental', 'experimentado', 'experimentación'] },
+            { root: 'fracasar', derivatives: ['fracaso', 'fracasado'] },
+            { root: 'gestionar', derivatives: ['gestión', 'gestor', 'gestionable', 'autogestión'] },
+            { root: 'igual', derivatives: ['igualdad', 'igualar', 'igualitario', 'desigual', 'desigualdad'] },
+            { root: 'implicar', derivatives: ['implicación', 'implicado', 'implícito', 'implícitamente'] },
+            { root: 'incluir', derivatives: ['inclusión', 'inclusivo', 'incluido', 'excluir', 'exclusión', 'exclusivo'] },
+            { root: 'influir', derivatives: ['influencia', 'influyente', 'influenciable', 'influenciar'] },
+            { root: 'innovar', derivatives: ['innovación', 'innovador'] },
+            { root: 'justificar', derivatives: ['justificación', 'justificable', 'injustificable'] },
+            { root: 'lograr', derivatives: ['logro', 'logrado', 'lograble'] },
+            { root: 'mantener', derivatives: ['mantenimiento', 'mantenible', 'mantención'] },
+            { root: 'obligar', derivatives: ['obligación', 'obligatorio', 'obligado', 'obligatoriedad'] },
+            { root: 'participar', derivatives: ['participación', 'participante', 'participativo', 'coparticipar'] },
+            { root: 'permitir', derivatives: ['permiso', 'permisible', 'permisividad'] },
+            { root: 'prevenir', derivatives: ['prevención', 'preventivo', 'previsible', 'imprevisible', 'previsor'] },
+            { root: 'proponer', derivatives: ['propuesta', 'proposición', 'propositivo', 'proponente', 'reproponer'] },
+            { root: 'reconocer', derivatives: ['reconocimiento', 'reconocible', 'irreconocible', 'reconocido'] },
+            { root: 'recurrir', derivatives: ['recurso', 'recurrencia', 'recurrente', 'recursivo'] },
+            { root: 'reflejar', derivatives: ['reflejo', 'reflexión', 'reflexivo', 'reflejado'] },
+            { root: 'relevante', derivatives: ['relevancia', 'irrelevante', 'irrelevancia'] },
+            { root: 'satisfacer', derivatives: ['satisfacción', 'satisfactorio', 'satisfactoriamente', 'insatisfacción', 'insatisfactorio'] },
+            { root: 'solicitar', derivatives: ['solicitud', 'solicitante', 'solicitado'] },
+            { root: 'sugerir', derivatives: ['sugerencia', 'sugerente', 'sugestivo', 'sugerido'] },
+            { root: 'tender', derivatives: ['tendencia', 'tendencioso', 'tendente'] },
+            { root: 'valorar', derivatives: ['valoración', 'valorativo', 'valioso', 'desvalorizar'] },
+        ];
+
+        // Niveles disponibles en la pantalla principal
+        const LEVELS = {
+            B2:  { label: 'B2',      families: WORD_FAMILIES_B2 },
+            C1C2: { label: 'C1 · C2', families: WORD_FAMILIES_C1 },
+        };
 
         // --------------------------------------------------------------
         //  ESTADO DEL JUEGO
@@ -533,9 +670,12 @@
                 .replace(/\s+/g, '');
         }
 
+        let currentLevel = null; // 'B2' | 'C1C2'
+
         function getRandomFamily(exclude) {
-            let available = WORD_FAMILIES.filter(f => f !== exclude);
-            if (available.length === 0) available = WORD_FAMILIES;
+            const pool = LEVELS[currentLevel].families;
+            let available = pool.filter(f => f !== exclude);
+            if (available.length === 0) available = pool;
             return available[Math.floor(Math.random() * available.length)];
         }
 
@@ -697,12 +837,7 @@
             }
 
             // Si gameOver es true, pasar a nueva ronda
-            let newFamily = getRandomFamily(state.currentFamily);
-            if (!newFamily) {
-                // fallback
-                const randomIndex = Math.floor(Math.random() * WORD_FAMILIES.length);
-                newFamily = WORD_FAMILIES[randomIndex];
-            }
+            const newFamily = getRandomFamily(state.currentFamily);
             initRound(newFamily);
             wordInput.disabled = false;
             submitBtn.disabled = false;
@@ -734,8 +869,29 @@
         // --------------------------------------------------------------
         //  INICIO
         // --------------------------------------------------------------
-        const initialFamily = getRandomFamily(null);
-        initRound(initialFamily);
+        const levelScreen = $('levelScreen');
+        const gamePanel = $('gamePanel');
+        const levelTag = $('levelTag');
+
+        function startLevel(key) {
+            currentLevel = key;
+            levelScreen.style.display = 'none';
+            gamePanel.style.display = 'block';
+            levelTag.textContent = 'DELE ' + LEVELS[key].label;
+            initRound(getRandomFamily(null));
+        }
+
+        function backToLevels() {
+            closeModal();
+            gamePanel.style.display = 'none';
+            levelScreen.style.display = 'block';
+            levelTag.textContent = 'DELE B2 · C1 · C2';
+            currentLevel = null;
+        }
+
+        $('levelB2').addEventListener('click', () => startLevel('B2'));
+        $('levelC1C2').addEventListener('click', () => startLevel('C1C2'));
+        $('changeLevelBtn').addEventListener('click', backToLevels);
     </script>
 </body>
 </html>
